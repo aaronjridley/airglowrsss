@@ -35,7 +35,7 @@ import ephem
 import fpiinfo
 # but it's the easiest way to deal with the chain-vs-direct drive issue in Peru.
 # Is there a better way?
-import ImgImagePlugin
+#import ImgImagePlugin
 import h5py
 
 def sort_look_directions(valid_az, valid_ze, az, ze, tol):
@@ -166,7 +166,7 @@ def FindCenter(img,  circle_fit_method = 'geometric', thresh=None, max_r=None):
     # Median-filter preprocessing is not necessary. Labeling accounts for noise spikes.
 
     # Parameters
-    pthresh = 70 # percentile for thresholding
+    pthresh = 80 # percentile for thresholding
     pmax_r = 0.8 # how much of the image to use, if max_r is not given
     min_label_size = 100 # only use labeled regions with more pixels than this
 
@@ -658,7 +658,18 @@ def get_conv_matrix_1D(instr_params, r, L, lam0, nFSRs = 4.):
     return A, lamvec
 
 
-def ParameterFit(instrument, site, laser_fns, sky_fns, sky_line_tag='X',direc_tol = 10.0, N=500, N0=0, N1=500, logfile=None, diagnostic_fig=None, horizon_cutoff = -6, reference='laser'):
+def ParameterFit(instrument,
+                 site,
+                 laser_fns,
+                 sky_fns,
+                 sky_line_tag='X',
+                 direc_tol = 10.0,
+                 N=500, N0=0,
+                 N1=500,
+                 logfile=None,
+                 diagnostic_fig=None,
+                 horizon_cutoff = -6,
+                 reference='laser'):
     '''
      Function that solves for temperatures and Doppler velocities for all data
      in the present directory.  Uses a parameter fit algorithm to first estimate
@@ -711,14 +722,14 @@ def ParameterFit(instrument, site, laser_fns, sky_fns, sky_line_tag='X',direc_to
 
 
     # Tunable parameters
-    CENTER_VARIATION_MAX = 1.5 # pixels, variation throughout night. Above this, outliers >1 stdev will be ignored.
+    CENTER_VARIATION_MAX = 10.5 # pixels, variation throughout night. Above this, outliers >1 stdev will be ignored.
     # Set threshold below which, the solved-for lamc
     # will be used to center the grid search for the next iteration.
     # This has a small effect; it is used to discourage FSR-jumps in wind.
     SIGMA_V_THRESH = 30.
     # How much of the fringe to use around the peak.
     # Between 0.0 and 1.0
-    FRINGEFACTOR = 1.0
+    FRINGEFACTOR = 0.8 
     MOON_THRESH = 37. # deg. Don't use samples that are closer than this angle to the moon.
     # What temporal interpolation to use for instrument parameters
     LASERPARAMINTERP = 'linear' # 'linear' or 'spline'
@@ -798,12 +809,14 @@ def ParameterFit(instrument, site, laser_fns, sky_fns, sky_line_tag='X',direc_to
     lasers = []
     for fn in lasers_all:
         d = ReadIMG(fn)
+        print('local time : ', d.info['LocalTime'])
         dt = local.localize(d.info['LocalTime'])
+        print('laser : ', fn, ' ; dt : ', dt, sunrise, sunset)
         if dt > sunset and dt < sunrise:
             lasers.append(fn)
         else:
-            logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + 'Sun up during %s. Ignoring this image...\n' % fn )
-
+            logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') +
+                          'Sun up during %s. Ignoring this image...\n' % fn )
 
     # Initialize data holder
     laser_times_center = []
@@ -818,14 +831,16 @@ def ParameterFit(instrument, site, laser_fns, sky_fns, sky_line_tag='X',direc_to
     if uselaser: # analyze the laser images for the center
         for fname in lasers:
             # Read in the laser image and estimate the center location
+            print('Processing laser image (centering) : ', fname)
             d = ReadIMG(fname)
             img = np.asarray(d)
-            (cx,cy) = FindCenter(img)
-
+            (cx,cy) = FindCenter(img, max_r = 250)
+            print(cx, cy)
             appx_I = np.percentile(img,95) - np.percentile(img,5)
             if appx_I < LAS_I_THRESH:
                 logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + \
-                                '%s laser fringes too dim (%.1f < %.1f). Ignoring this image...\n' % (fname, appx_I, LAS_I_THRESH))
+                              '%s laser fringes too dim (%.1f < %.1f). Ignoring this image...\n' % \
+                              (fname, appx_I, LAS_I_THRESH))
                 fnames_to_remove.append(fname)
 
             # Make sure valid data returned
@@ -835,7 +850,8 @@ def ParameterFit(instrument, site, laser_fns, sky_fns, sky_line_tag='X',direc_to
                 else:
                     center = np.vstack((center, [cx, cy]))
 
-                logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + '%s center: %.2f, %.2f\n' % (fname, cx, cy))
+                logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + \
+                              '%s center: %.2f, %.2f\n' % (fname, cx, cy))
 
                 # Append the time of the laser image
                 laser_times_center.append(local.localize(d.info['LocalTime']))
@@ -965,8 +981,8 @@ def ParameterFit(instrument, site, laser_fns, sky_fns, sky_line_tag='X',direc_to
         # Loop through all of the lasers
         for fname in lasers:
 
-
             # Read in the laser image and estimate the center location
+            print('Processing laser image (spline) : ', fname)
             d = ReadIMG(fname)
             img = np.asarray(d)
 
@@ -985,6 +1001,7 @@ def ParameterFit(instrument, site, laser_fns, sky_fns, sky_line_tag='X',direc_to
                 alpha = instrument['pix_size']/instrument['focal_length'] * d.info['XBinning']
                 # Intensity and background by looking at fringes
                 I = laser_spectra.max() - laser_spectra.min()
+                print('  --> Laser peak to valley intensity : ', I)
                 B = laser_spectra.min()
 
                 laser_params = Parameters()
@@ -1350,6 +1367,7 @@ def ParameterFit(instrument, site, laser_fns, sky_fns, sky_line_tag='X',direc_to
         ignore_this_one = False
 
         # Read in the sky image
+        print('Processing sky image : ', fname)
         d = ReadIMG(fname)
         img = np.asarray(d)
 
@@ -1367,10 +1385,11 @@ def ParameterFit(instrument, site, laser_fns, sky_fns, sky_line_tag='X',direc_to
 
         # Perform the annular summation
         sky_spectra, sky_sigma = AnnularSum(img,annuli,0)
+        print('  --> Intesity diff on sky spectra : ', np.max(sky_spectra) - np.min(sky_spectra))
+        print('  --> Max sky sigma (not goodness of fit!) : ', np.max(sky_sigma))
 
         # See if there are any NaNs in the spectra.  If so, skip this one.
         if np.isnan(sky_spectra).sum() == 0 and not ignore_this_one:
-
             # Append the time of the sky image
             sky_times.append(local.localize(d.info['LocalTime']))
             intT = d.info['ExposureTime']
@@ -1468,6 +1487,7 @@ def ParameterFit(instrument, site, laser_fns, sky_fns, sky_line_tag='X',direc_to
 
             lamc_candidates = np.linspace(last_lamc - FSR/2, last_lamc + FSR/2, 50)
             corrvec = np.array([goodness(lamc) for lamc in lamc_candidates])
+            #print('Searching for best lam')
             best_lamc = lamc_candidates[corrvec.argmax()]
             sky_params['lamc'].value = best_lamc
 
@@ -1490,7 +1510,7 @@ def ParameterFit(instrument, site, laser_fns, sky_fns, sky_line_tag='X',direc_to
                           fcn_kws={'data': sky_spectra[N0:N1], 'sigma': sky_sigma[N0:N1]}, scale_covar=True)
                 sky_fit.prepare_fit()
                 result = sky_fit.leastsq()
-                sky_params=result.params
+                sky_params = result.params
 
             # Redo the fit using only points near the spectral peak (determined by fringefactor)
             if FRINGEFACTOR < 1.0:
@@ -1525,7 +1545,7 @@ def ParameterFit(instrument, site, laser_fns, sky_fns, sky_line_tag='X',direc_to
                 sky_fit.prepare_fit()
                 sky_fit.scale_covar = True
                 result = sky_fit.leastsq()
-                sky_params=result.params
+                sky_params = result.params
 
              # if the inversion failed, replace values with nans and set error bars to inf
             if not result.success or not result.errorbars or np.isnan(result.params['lamc'].stderr):
@@ -1582,6 +1602,7 @@ def ParameterFit(instrument, site, laser_fns, sky_fns, sky_line_tag='X',direc_to
         else:
             logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + '%s is invalid and not analyzed\n' % fname)
 
+        logfile.flush()
     # Warn again if the CCD was too hot
     if Novertemp > 0:
         logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + 'WARNING: %i/%i sky exposures were taken with a CCD temperature that was too hot. They were flagged with the quality flag.\n' % (Novertemp, len(sky)))
@@ -1852,6 +1873,12 @@ def ParameterFit(instrument, site, laser_fns, sky_fns, sky_line_tag='X',direc_to
                     }
 
     # Apply Doppler reference
+
+    print(FPI_Results['laser_value'])
+    print(FPI_Results['LOSwind'])
+    print(FPI_Results['sigma_LOSwind'])
+    print(reference)
+
     dref,drefe = DopplerReference(FPI_Results, reference=reference)
     FPI_Results['LOSwind'] = FPI_Results['LOSwind'] - dref
     FPI_Results['doppler_reference'] = dref
@@ -2259,8 +2286,8 @@ def DopplerReference(FPI_Results, reference='zenith', statistic='mode'):
 # TODO:
 #       1) Weight interpolation by uncertanties and take cloud coverage info
 #               into account
-
-        sigma_v_thresh = 150 # don't use samples with an error bar greater than this
+        # Change this back to 150
+        sigma_v_thresh = 2500 # don't use samples with an error bar greater than this
 
         if reference == 'zenith':
                 # First, find all zenith measurements and linearly interpolate to each time
