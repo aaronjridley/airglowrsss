@@ -59,6 +59,9 @@ _dates['minime07']['eku'] = { 'start': datetime.datetime(2012, 7,11),
 _dates['minime08'] = {}
 _dates['minime08']['ann'] = { 'start': datetime.datetime(2012, 6,20),
                               'stop' : None, }
+_dates['minime28'] = {}
+_dates['minime28']['an2'] = { 'start': datetime.datetime(2024, 9, 1),
+                              'stop' : None, }
 
 _dates['minime09'] = {}
 _dates['minime09']['par'] = { 'start': datetime.datetime(2013, 7,22),
@@ -220,10 +223,109 @@ _sites['uao'] = {
     }
 
 _sites['ann'] = {
+        'Location':     (67.732, 24.417, 254),
+        'Name':         'AakenusFinland',
+        #'Location':     (42.27, -83.75, 300),
+        #'Name':         'Peach Mountain',
+        'Abbreviation': 'ann',
+        'Timezone':     'UTC',
+        #'Timezone':     'US/Eastern',
+        'BufferTime':   45,
+        'CloudThresh':  -25.0,
+        'scpUser':      'fpi',
+        'scpPort':      19996,
+        'Network':      'nation',
+        'sql_id':       19, # ID on the airglow SQL database
+        'share':        False, # whether or not to save a copy of the npz file in a separate folder
+        'borders':      True,
+        'Directions':   {
+                'Laser': {'ze': -180, 'az': 90, 'exptime': 30,
+		            'n_exp': 0, 'last_exp': None, 'delay':600},
+	            'Zenith': {'ze': 0, 'az': 90, 'exptime': 300, # BJH changed az from 0 to 90, 19 Aug 2014
+		            'n_exp': 0, 'last_exp': None, 'delay':1500},
+	            'North': {'ze': 45, 'az': 0, 'exptime': 300,
+		            'n_exp': 0, 'last_exp': None, 'delay':0},
+	            'South': {'ze': -45, 'az': 0, 'exptime': 300,
+		            'n_exp': 0, 'last_exp': None, 'delay':0},
+	            'East': {'ze': 45, 'az': 90, 'exptime': 300,
+		            'n_exp': 0, 'last_exp': None, 'delay':0},
+	            'West': {'ze': -45, 'az': 90, 'exptime': 300,
+		            'n_exp': 0, 'last_exp': None, 'delay':0},
+	            'CV_ANN_UAO_1': {'ze': -53.34, 'az': 104.08, 'exptime': 300,
+		            'n_exp': 0, 'last_exp': None, 'delay':0},
+	            'CV_ANN_UAO_2': {'ze': -53.34, 'az': 13.97, 'exptime': 300,
+		            'n_exp': 0, 'last_exp': None, 'delay':0},
+	            'IN_ANN_UAO': {'ze': -43.07, 'az': 59.03, 'exptime': 300,
+		            'n_exp': 0, 'last_exp': None, 'delay':0},
+	            'CV_ANN_EKU_1': {'ze': 57.98, 'az': 138.65, 'exptime': 300,
+		            'n_exp': 0, 'last_exp': None, 'delay':0},
+	            'CV_ANN_EKU_2': {'ze': -57.98, 'az': 48.75, 'exptime': 300,
+		            'n_exp': 0, 'last_exp': None, 'delay':0},
+	            'IN_ANN_EKU': {'ze': -47.86, 'az': 3.70, 'exptime': 300,
+		            'n_exp': 0, 'last_exp': None, 'delay':0},
+	            'Windfield10': {'ze': -45.1, 'az': -7.2, 'exptime': 180,
+		            'n_exp': 0, 'last_exp': None, 'delay':0},
+	            'Windfield11': {'ze': -10.9, 'az': 48.4, 'exptime': 180,
+		            'n_exp': 0, 'last_exp': None, 'delay':0},
+	            'Windfield12': {'ze': -54.5, 'az': 137.0, 'exptime': 180,
+		            'n_exp': 0, 'last_exp': None, 'delay':0},
+	            'Along_B': {'ze': -22.1, 'az': -6.3, 'exptime': 180,
+		            'n_exp': 0, 'last_exp': None, 'delay':0},
+	            'MTM_Search': {'ze': -27.77, 'az': -21.47, 'exptime': 180,
+		            'n_exp': 0, 'last_exp': None, 'delay':0},
+                },
+    }
+
+_sites['aak'] = {
+        'Location':     (67.732, 24.417, 254),
+        'Name':         'AakenusFinland',
+        'Abbreviation': 'aak',
+        'Timezone':     'UTC',
+        #'Timezone':     'US/Eastern',
+        'BufferTime':   45,
+        'CloudThresh':  -25.0,
+        'scpUser':      'fpi',
+        'scpPort':      19996,
+        'Network':      'nation',
+        'sql_id':       19, # ID on the airglow SQL database
+        'share':        False, # whether or not to save a copy of the npz file in a separate folder
+        'borders':      True,
+        'Directions':   {
+                'Laser': {'ze': -180, 'az': 90, 'exptime': 30,
+		            'n_exp': 0, 'last_exp': None, 'delay':600},
+	            'Zenith': {'ze': 0, 'az': 90, 'exptime': 300, # BJH changed az from 0 to 90, 19 Aug 2014
+		            'n_exp': 0, 'last_exp': None, 'delay':1500}
+                }
+    }
+
+_sites['abi'] = {
+        'Location':     (68.3495, 18.8312, 400),
+        'Name':         'AbiskoSweden',
+        'Abbreviation': 'abi',
+        'Timezone':     'UTC',
+        #'Timezone':     'US/Eastern',
+        'BufferTime':   45,
+        'CloudThresh':  -25.0,
+        'scpUser':      'fpi',
+        'scpPort':      19996,
+        'Network':      'nation',
+        'sql_id':       19, # ID on the airglow SQL database
+        'share':        False, # whether or not to save a copy of the npz file in a separate folder
+        'borders':      True,
+        'Directions':   {
+                'Laser': {'ze': -180, 'az': 90, 'exptime': 30,
+		            'n_exp': 0, 'last_exp': None, 'delay':600},
+	            'Zenith': {'ze': 0, 'az': 90, 'exptime': 300, # BJH changed az from 0 to 90, 19 Aug 2014
+		            'n_exp': 0, 'last_exp': None, 'delay':1500}
+                }
+    }
+
+_sites['an2'] = {
         'Location':     (42.27, -83.75, 300),
         'Name':         'Peach Mountain',
-        'Abbreviation': 'ann',
-        'Timezone':     'US/Eastern',
+        'Abbreviation': 'an2',
+        'Timezone':     'UTC',
+        #'Timezone':     'US/Eastern',
         'BufferTime':   45,
         'CloudThresh':  -25.0,
         'scpUser':      'fpi',
@@ -1267,9 +1369,43 @@ _instruments['minime07'] = {
 _instruments['minime08'] = {
         'name'          : 'minime08',
         'N'             : 500,          # Number of annuli
-        'N0'            : 0,            # First annulus to use
+        'N0'            : 50,           # First annulus to use
         'N1'            : 500,          # Last annulus to use
-        'focal_length'  : 310e-3,       # focal length of lens in m
+        'focal_length'  : 300e-3,       # focal length of lens in m
+        'pix_size'      : 13e-6,        # pixel size on CCD in m
+        'lam_laser'     : 632.8e-9,     # laser wavelength in m
+        'lam0'          : 630.0e-9,     # nominal line center wavelength in m
+        'nominal_t'     : 1.2806e-2,       # approximate etalon gap in m
+        'default_params': {# instrument params to be used if the laser fails (i.e., zenith reference)
+                                'R': 0.72,
+                            'alpha': 8.4e-5,
+                                'I': 1.0,
+                                'B': 0.0,
+                               'a1': -1.1e-1,
+                               'a2': 4.0e-3,
+                               'b0': 2.5,
+                               'b1': 1.2,
+                               'b2': -3.2e-1,
+                           'center':  (278.9, 262.9),
+                          },
+        'sql_winds_id'          : 74,           # ID for SQL database
+        'sql_temperatures_id'   : 75,           # ID for SQL database
+        'sql_diagnostics_id'    : 88,           # ID for SQL database
+        'many_fringes'          : True,         # indicates whether radial falloff terms should be used
+        'bad_wind_dates'        : [(datetime.datetime(2015,6,26), datetime.datetime(2015,7,14),2,)],   # Each entry is a tuple (start_date, stop_date, flag), between which data are bad. flag is a number, indicating the severity.
+        'bad_temperature_dates' : [(datetime.datetime(2015,6,26), datetime.datetime(2015,7,14),2,)],   # Each entry is a tuple (start_date, stop_date, flag), between which data are bad. flag is a number, indicating the severity.
+        'send_to_madrigal'      : True, # whether or not we should send this instrument's data to Madrigal
+        'skyI_quality_thresh'   : [0.4467,0.2239], # The brightness [counts/sec] below which we raise the quality flag (for q=1 and q=2, respectively). Red only.
+        'skyB_quality_thresh'   : np.inf,            # Label with q=1 for data with skyB > this number. Red and green.
+        'plot_ref'              : 'laser',           # 'laser' or 'zenith'. How to generate quicklook plots (This doesn't affect what's in npz file)
+    }
+
+_instruments['minime28'] = {
+        'name'          : 'minime28',
+        'N'             : 500,          # Number of annuli
+        'N0'            : 9,            # First annulus to use
+        'N1'            : 500,          # Last annulus to use
+        'focal_length'  : 300e-3,       # focal length of lens in m
         'pix_size'      : 13e-6,        # pixel size on CCD in m
         'lam_laser'     : 632.8e-9,     # laser wavelength in m
         'lam0'          : 630.0e-9,     # nominal line center wavelength in m
