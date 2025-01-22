@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 # Functions to process FPI data on remote2
 
@@ -7,12 +8,12 @@
 import FPI
 import glob
 from lmfit import Parameters
-from optparse import OptionParser
+#from optparse import OptionParser
 import datetime
 import numpy as np
 import os
-import BoltwoodSensor
-import X300Sensor
+#import BoltwoodSensor
+#import X300Sensor
 import FPIDisplay
 import pytz
 import multiprocessing
@@ -29,7 +30,7 @@ import shutil
 #reload(FPI)
 #reload(fpiinfo)
 
-
+isDebug = True
 
 def quality_hack(instr_name, year, doy, FPI_Results, logfile):
     '''
@@ -169,35 +170,61 @@ def createL1ASCII(NPZ,OUT):
             UTCTime - Start time of image in UTC
             Az - Azimuth angle in degrees (compass coordinates)
             Ze - Zenith angle in degrees (0 is zenith)
-            Temp - Estimated temperature of neutral layer in K. Biases in temperature may exist for different instruments
+            Temp - Estimated temperature of neutral layer in K. 
+                   Biases in temperature may exist for different instruments
             Temp_Sig - Estimated uncertainty of temperature estimate in K
-            LOS_Wind - Estimated line-of-sight winds of measurement in m/s (+ away from instrument). This is NOT projected
+            LOS_Wind - Estimated line-of-sight winds of measurement in m/s 
+                       (+ away from instrument). This is NOT projected
             LOS_Wind_Sig - Estimated uncertainty of wind estimate in m/s
-            Fit_Sig - Estimated uncertainty of wind due to LM fit of sky data in m/s
-            Cal_Sig - Estimated uncertainty of wind due to laser calibration accuracy in m/s
+            Fit_Sig - Estimated uncertainty of wind due to 
+                      LM fit of sky data in m/s
+            Cal_Sig - Estimated uncertainty of wind due to 
+                      laser calibration accuracy in m/s
             I - Estimated airglow intensity in arbitrary units
             I_Sig - Estimated uncertainty of intensity estimate
             Bkgd - Estimated Background intensity of CCD
             Bkgd_Sig - Estimated uncertainty of background estimate
             Int_Time - Length of exposure for the measurement in s
             Chisqr - Chi-squared of the model fit
-            Cld_Ind - Cloudiness indicator: ambient minus sky/cloud temperature in C. If less than -25 skies are assumed clear (cloudy skies are warmer than clear skies).  -999.9 indicates no data available and thus assumes good skies
-            T_Flag - Temperature error flag: 2 is bad, 1 known issues/ iffy data, 0 is good
-            W_Flag - Wind error flag: 2 is bad, 1 known issues/ iffy data, 0 is good
-            Ref - How Doppler reference was calculated: Laser uses laser images to calibrate the doppler offset assuming that on average nighttime veritcal winds are zero, Zenith assumes zenith winds are zero and uses this as a Doppler zero
+            Cld_Ind - Cloudiness indicator: 
+                      ambient minus sky/cloud temperature in C. 
+                      If less than -25 skies are assumed clear 
+                         (cloudy skies are warmer than clear skies).  
+                      -999.9 indicates no data available and 
+                         thus assumes good skies
+            T_Flag - Temperature error flag: 2 is bad, 
+                     1 known issues/ iffy data, 0 is good
+            W_Flag - Wind error flag: 2 is bad, 
+                     1 known issues/ iffy data, 0 is good
+            Ref - How Doppler reference was calculated: 
+                  Laser uses laser images to calibrate the doppler offset 
+                  assuming that on average nighttime veritcal winds are zero, 
+                  Zenith assumes zenith winds are zero and uses 
+                  this as a Doppler zero
             Wl - Wavelength of measured emission line in m
-            Vers - Current version of python analysis code (to verify up-to-date product)\n')
+            Vers - Current version of python analysis code 
+                   (to verify up-to-date product)\n')
         note.write('NOTES:\nAssumed emission altitude of 250 km\n')
 
         note.write('\n---------------------\nData:\n')
         '''
         note.write('UTCTime____________  ____Az  ___Ze  ______T  _T_Sig  ___Wind  _W_Sig  FitSig  CalSig  _____I  _I_Sig  ___Bkgd B_Sig  Sec  Chisqr  CldInd TF WF  __Ref  ______Wl  Vers\n')
 
-        for a_tw, a_az, a_ze, a_t, a_e_t, a_w, a_e_w, a_ef, a_ec, a_i, a_e_i, a_b, a_e_b, a_it, a_cs, a_dt,a_tf,a_wf in zip(timeywimey, az, ze, temps, e_temps, winds, e_winds, e_fit, e_cal, i, e_i, b, e_b, inttime, chisqr, sky_temp,temp_flag,wind_flag):
+        for a_tw, a_az, a_ze, \
+            a_t, a_e_t, a_w, a_e_w, \
+            a_ef, a_ec, a_i, a_e_i, a_b, a_e_b, \
+            a_it, a_cs, \
+            a_dt, a_tf, a_wf \
+            in \
+            zip(timeywimey, az, ze, \
+                temps, e_temps, winds, e_winds, \
+                e_fit, e_cal, i, e_i, b, e_b, \
+                inttime, chisqr, \
+                sky_temp, temp_flag, wind_flag):
             dn = a_tw.astimezone(pytz.utc)
             utctime = dn.strftime("%Y-%m-%d %H:%M:%S")
             line = "{:19s}  {:6.1f}  {:5.1f}  {:7.2f}  {:6.2f}  {:7.2f}  {:6.2f}  {:6.2f}  {:6.2f}  {:6.4f}  {:6.4f}  -999.00  -999  {:3.0f}  {:6.2f}  {:6.1f}  {:1.0f}  {:1.0f}  {:6s}  {:7.1e}  {:5s}\n".format(utctime, a_az, a_ze, a_t, a_e_t, a_w, a_e_w, a_ef, a_ec, a_i, a_e_i, a_it, a_cs, a_dt, a_tf, a_wf, reference, wavelength, version)
-            #line = "{:19s}  {:6.1f}  {:5.1f}  {:7.2f}  {:6.2f}  {:7.2f}  {:6.2f}  {:6.1f}  {:4.2f}  {:6.1f}  {:4.2f}  {:3.0f}  {:6.2f}  {:6.1f}  {:1d}  {:1d}  {:6s}  {:7.1e}  {:5s}\n".format(utctime, a_az, a_ze, a_t, a_e_t, a_w, aax.xaxis_date()_e_w, a_i, a_e_i, a_b, a_e_b, a_it, a_cs, a_dt, t_flag, w_flag, reference, wavelength, version)
+
             note.write(line)
 
     note.closed
@@ -227,8 +254,8 @@ def get_all_laser_images(direc):
 
 def get_all_sky_images(direc,sky_line_tag='X'):
     '''
-    Return all sky (i.e., airglow) images in the specified directory, as a list of strings.
-    Sky images are those of the following forms:
+    Return all sky (i.e., airglow) images in the specified directory, 
+    as a list of strings. Sky images are those of the following forms:
 
     X20091103001.img
     UAO_X_20091103_210000_001.img
@@ -252,13 +279,17 @@ def get_all_sky_images(direc,sky_line_tag='X'):
 
 
 
-def process_instr(instr_name ,year, doy, reference='laser', sky_line_tag='X', use_npz = False,
-                  wind_err_thresh=100., temp_err_thresh=100., cloud_thresh = [-22.,-10.],
-                  send_to_website=False, enable_share=False, send_to_madrigal=False,
-                  enable_windfield_estimate=False,
-                  fpi_dir='/rdata/airglow/fpi/', bw_dir='/rdata/airglow/templogs/cloudsensor/',
-                  x300_dir='/rdata/airglow/templogs/x300/', results_stub='/rdata/airglow/fpi/results/',
-):
+def process_instr(instr_name, year, doy, \
+                  reference='laser', sky_line_tag='X', use_npz = False, \
+                  wind_err_thresh=100., temp_err_thresh=100., \
+                  cloud_thresh = [-22.,-10.], \
+                  send_to_website = False, enable_share = False, \
+                  send_to_madrigal = False, \
+                  enable_windfield_estimate = False, \
+                  fpi_dir = '/rdata/airglow/fpi/', \
+                  bw_dir = '/rdata/airglow/templogs/cloudsensor/', \
+                  x300_dir = '/rdata/airglow/templogs/x300/', \
+                  results_stub='/rdata/airglow/fpi/results/'):
     '''
     Process all the data from the instrument with name instr_name on
     the day specified by (year, doy). This function looks in the appropriate
@@ -294,21 +325,25 @@ def process_instr(instr_name ,year, doy, reference='laser', sky_line_tag='X', us
         enable_windfield_estimate - bool. If True, and if this site is part of the 'nation'
                        or 'peru' networks, then the wind field estimation analysis will be
                        run. Right now, this only works at Illinois.
-        fpi_dir - str. the base directory where the data are stored. It is assumed that
-                  data are organized in a folder like: <fpi_dir>/minime01/car/2015/20150810/
-        bw_dir - str. the directory where the Boltwood Cloud Sensor files are stored. Set
-                      this to empty string ('') if no sensor exists
-        x300_dir - str. the directory where the X300 temperature sensor files are stored.
-                       Set this to empty string ('') if no sensor exists
-        results_stub - str. the directory where the results will be saved. A .npz file
-                       and a .log file will be created.
-        sky_line_tag = str. tag used to search for specific source files i.e. X for red line images, XG for green, etc
+        fpi_dir - str. the base directory where the data are stored. 
+                  It is assumed that data are organized in a folder like: 
+                  <fpi_dir>/minime01/car/2015/20150810/
+        bw_dir - str. the directory where the Boltwood Cloud Sensor 
+                 files are stored. 
+                 Set this to empty string ('') if no sensor exists
+        x300_dir - str. the directory where the X300 temperature sensor 
+                   files are stored.
+                   Set this to empty string ('') if no sensor exists
+        results_stub - str. the directory where the results will be saved. 
+                       A .npz file and a .log file will be created.
+        sky_line_tag = str. tag used to search for specific source files 
+                       i.e. X for red line images, XG for green, etc
 
     OUTPUTS:
         warnings - str - If this script believes a manual check of the data
                    is a good idea, a message will be returned in this string.
-                   If not, the empty string will be returned. For now, the message
-                   is the entire log.
+                   If not, the empty string will be returned. 
+                   For now, the message is the entire log.
 
     '''
 
@@ -322,14 +357,19 @@ def process_instr(instr_name ,year, doy, reference='laser', sky_line_tag='X', us
     scp_user       = 'airglowgroup@webhost.engr.illinois.edu'
     db_image_stub  =        'SummaryImages/' # relative path from web server directory on airglow
     db_log_stub =           'SummaryLogs/'
-#    web_images_stub =       '/home/airglowgroup/data/SummaryImages/' # absolute location on airglow of summary images
-#    web_logs_stub =         '/home/airglowgroup/data/SummaryLogs/' # absolute location on airglow of summary logs
-    web_images_stub =       '/home/airglow/public_html/Data/SummaryImages/' # absolute location on airglow of summary images
-    web_logs_stub =         '/home/airglow/public_html/Data/SummaryLogs/' # absolute location on airglow of summary logs
+    #    web_images_stub = '/home/airglowgroup/data/SummaryImages/' # absolute location on airglow of summary images
+    #    web_logs_stub = '/home/airglowgroup/data/SummaryLogs/' # absolute location on airglow of summary logs
+    # absolute location on airglow of summary images
+    web_images_stub = '/home/airglow/public_html/Data/SummaryImages/' 
+    # absolute location on airglow of summary logs
+    web_logs_stub = '/home/airglow/public_html/Data/SummaryLogs/' 
     # Information about sending to Madrigal. Only used if send_to_madrigal==True
-    madrigal_stub =         '/rdata/airglow/database/' # where reduced ascii txt and png files are saved for Madrigal
-    # Information about sending to partner institutions. Only used if enable_share==True
-    share_stub    =         '/rdata/airglow/share/' # where to save a copy of the .npz file for sharing with collaborators
+    # where reduced ascii txt and png files are saved for Madrigal
+    madrigal_stub = '/rdata/airglow/database/' 
+    # Information about sending to partner institutions.
+    # Only used if enable_share==True
+    # where to save a copy of the .npz file for sharing with collaborators
+    share_stub = '/rdata/airglow/share/'
 
     notify_the_humans = False # default
 
@@ -1159,7 +1199,9 @@ def process_instr(instr_name ,year, doy, reference='laser', sky_line_tag='X', us
             s = myfile.read() # return the whole thing as a string, including new-lines
     return s
 
-
+# ----------------------------------------------------------------------------
+# Process a specific site on a specific day
+# ----------------------------------------------------------------------------
 
 def process_site(site_name, year, doy, reference='laser'):
     '''
@@ -1179,18 +1221,29 @@ def process_site(site_name, year, doy, reference='laser'):
     process_dn = datetime.datetime(year,1,1) + datetime.timedelta(days = doy-1)
     instr_names = fpiinfo.get_instr_at(site_name, process_dn)
     if len(instr_names) == 0:
-        raise Exception('No instruments found at site "%s" on %s' % (site_name, process_dn))
+        raise Exception('No instruments found at site "%s" on %s' % \
+                        (site_name, process_dn))
     for instr_name in instr_names:
-        print('Starting (%s, %s, %s, %s, reference=%s)' % (instr_name, site_name, year, doy, reference))
+        print('Starting (%s, %s, %s, %s, reference=%s)' % \
+              (instr_name, site_name, year, doy, reference))
         process_instr(instr_name, year, doy, reference)
+        
+    return
 
+# ----------------------------------------------------------------------------
+# Process Directory full of data (laser + sky)
+# ----------------------------------------------------------------------------
 
-
-
-
-def process_directory(data_direc, results_direc, instrument, site, reference='laser',
-                      wind_err_thresh=100., temp_err_thresh=100., make_plots=True, Tmin=300., Tmax=1500.,
-                      bw_cloud_file_1 = '', bw_cloud_file_2 = '', cloud_thresh = [-22.,-10.], horizon_cutoff=-6):
+def process_directory(data_direc, results_direc, \
+                      instrument, site, reference='laser', \
+                      wind_err_thresh=100., \
+                      temp_err_thresh=100., \
+                      make_plots = True, \
+                      Tmin = 300., Tmax=1500., \
+                      bw_cloud_file_1 = '', \
+                      bw_cloud_file_2 = '', \
+                      cloud_thresh = [-22.,-10.], \
+                      horizon_cutoff=-6):
     '''
     Process all the data from the specified folder. This function analyzes
     the laser and sky images to obtain line of sight winds,
@@ -1206,44 +1259,51 @@ def process_directory(data_direc, results_direc, instrument, site, reference='la
         site - dictionary containing necessary site parameters
     OPTIONAL INPUTS:
         reference - str, 'laser' or 'zenith'. Passed on to FPI.ParameterFit(...)
-        wind_err_thresh - float, m/s. Samples with a fit error above this should get a quality
-                            flag of 2.
-        temp_err_thresh - float, K. Samples with a fit error above this should get a quality
-                            flag of 2.
+        wind_err_thresh - float, m/s. 
+                          Samples with a fit error above this should get a 
+                          quality flag of 2.
+        temp_err_thresh - float, K. 
+                          Samples with a fit error above this should get a 
+                          quality flag of 2.
         make_plots      - whether to make and save summary graphics
-        Tmin, Tmax      - float, K. Sets the scale of the y axis on the temperature plot
-        bw_cloud_file_1 - location of the Boltwood cloud sensor file relevant to the pre-midnight data
+        Tmin, Tmax      - float, K. 
+                          Sets the scale of the y axis on the temperature plot
+        bw_cloud_file_1 - location of the Boltwood cloud sensor file 
+                          relevant to the pre-midnight data
                           (if '', don't try to ingest cloud data at all)
-        bw_cloud_file_2 - location of the Boltwood cloud sensor file relevant to the post-midnight data
+        bw_cloud_file_2 - location of the Boltwood cloud sensor file 
+                          relevant to the post-midnight data
                           (if '', ignore the second file)
-        cloud_thresh    - [float,float], K. The two cloud sensor readings that indicate
-                          partially- and fully-cloudy. This affects the quality flag.
-        horizon_cutoff  - int, deg. For solar elevation angles above this, the sun is considered "up" and
-                          data are discarded.
+        cloud_thresh    - [float,float], K. 
+                          The two cloud sensor readings that indicate
+                          partially- and fully-cloudy. 
+                          This affects the quality flag.
+        horizon_cutoff  - int, deg. 
+                          For solar elevation angles above this, 
+                          the sun is considered "up" and data are discarded.
 
     OUTPUTS:
         warnings - str - If this script believes a manual check of the data
                    is a good idea, a message will be returned in this string.
-                   If not, the empty string will be returned. For now, the message
-                   is the entire log.
+                   If not, the empty string will be returned. 
+                   For now, the message is the entire log.
 
     '''
 
-
     # Define constants that do not depend on the site
-    direc_tol = 10.0 # tolerance in degrees to recognize a look direction with
-    ccd_temp_thresh = -60. # sky exposures with a CCD temp above this will get a quality flag.
-
-    notify_the_humans = False # default
+    # tolerance in degrees to recognize a look direction with
+    direc_tol = 10.0 
+    # sky exposures with a CCD temp above this will get a quality flag:
+    ccd_temp_thresh = -60. 
+    # default:
+    notify_the_humans = False 
 
     # Find laser and sky files
     laser_fns = get_all_laser_images(data_direc)
-    sky_fns   = get_all_sky_images(data_direc)
+    sky_fns   = get_all_sky_images(data_direc, sky_line_tag = 'XR')
     local = pytz.timezone(site['Timezone'])
     laser_fns.sort()
     sky_fns.sort()
-
-
 
     if not laser_fns and not sky_fns:
         raise Exception('No data found.\n')
@@ -1256,18 +1316,39 @@ def process_directory(data_direc, results_direc, instrument, site, reference='la
 
     # Open a logfile
     logname = results_direc + instrdatestr + '.log'
-    logfile = open(logname,'w') # overwrite previous log
-    logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + 'Logfile Created\n')
+    logfile = open(logname, 'w') # overwrite previous log
 
+    def get_time_now():
+        now = datetime.datetime.now()
+        sNow = now.strftime('%m/%d/%Y %H:%M:%S')
+        return sNow
 
-    if not laser_fns and sky_fns and reference=='laser': # This is not a big deal if reference=='zenith'
-        logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + 'No %s laser data found between %s and %s. Sky data found. <BADLASER> \n' % (instr_name, str(start_dt), str(stop_dt)))
+    def write_message(logfile = None, sMessage = '', isDebug = True):
+        sNow = get_time_now()
+        sTotal = sNow + ': ' + sMessage
+        if (not isDebug):
+            print(sTotal)
+        else:
+            logfile.write(sTotal + '\n')
+        return
+            
+    write_message(logfile, 'Logfile Created', isDebug)
+
+    # This is not a big deal if reference=='zenith'
+    if not laser_fns and sky_fns and reference=='laser':
+        message = 'No %s laser data found between %s and %s. \n' % \
+            (instr_name, str(start_dt), str(stop_dt))
+        message = message + 'Sky data found. <BADLASER> \n'
+        write_message(logfile, message, isDebug)
         logfile.close()
-        raise Exception('No %s laser data found between %s and %s. Sky data found.\n' % (instr_name, str(start_dt), str(stop_dt)))
+        raise Exception(message)
 
-
-    npzname = results_direc + instrdatestr + '.npz' # the name of the npz file to save to
-    Diagnostic_Fig = plt.figure(dpi=300, figsize=(10,7.5)) # Figure for diagnostics to be drawn to
+    # the name of the npz file to save to
+    npzname = \
+        results_direc + \
+        instrdatestr + '.npz'
+    # Figure for diagnostics to be drawn to
+    Diagnostic_Fig = plt.figure(dpi=300, figsize=(10,7.5)) 
     try:
         # Run the analysis
         (FPI_Results, notify_the_humans) = FPI.ParameterFit(instrument, site, laser_fns, sky_fns, \
@@ -1278,7 +1359,8 @@ def process_directory(data_direc, results_direc, instrument, site, reference='la
     except:
         # FPI.ParameterFit crashed. For now, write the log and re-raise the Exception.
         tracebackstr = traceback.format_exc()
-        logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + 'Error analyzing %s. Traceback listed below.\n-----------------------------------\n%s\n-----------------------------------\n' % (instrdatestr,tracebackstr))
+        logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + \
+                      'Error analyzing %s. Traceback listed below.\n-----------------------------------\n%s\n-----------------------------------\n' % (instrdatestr,tracebackstr))
         notify_the_humans = True # This is redundant, since raising will ensure humans are notified.
     #        Diagnostic_Fig = plt.figure()
     #        Diagnostic_Fig.text(0.5, 0.5, 'Error - see log file', fontsize = 20, ha='center')
@@ -1287,80 +1369,92 @@ def process_directory(data_direc, results_direc, instrument, site, reference='la
 
 
     # Grab the SVN revision number, so we know what code was used to process this day.
-    svndir = '/'.join(FPI.__file__.split('/')[:-1]) # get the directory of FPI.py
-    p = subprocess.Popen('svnversion %s'%svndir,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    (stdout,stderr) = p.communicate()
-    sv = re.split(':|\n', stdout)[0]
-
+    #svndir = '/'.join(FPI.__file__.split('/')[:-1]) # get the directory of FPI.py
+    #p = subprocess.Popen('svnversion %s'%svndir,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    #(stdout,stderr) = p.communicate()
+    #sv = re.split(':|\n', stdout)[0]
+    sv = 'none'
     # Save the SVN version number
     FPI_Results['SVNRevision'] = sv
-
 
     # Try to load the Boltwood data. This is inside a try block so that
     # the npz will still save if there is a problem.
     FPI_Results['Clouds'] = None # defaults
+
+    Clouds = np.nan*np.zeros((np.size(FPI_Results['sky_times']),3))
+
+    for iFile, file in enumerate(FPI_Results['sky_fns']):
+        print('Grabbing Temperatures from : ', file)
+        d = FPI.ReadIMG(file)
+        print(d.info['LocalTime'])
+        print(FPI_Results['sky_times'][iFile])
+        Clouds[iFile, :] = d.attrs['OutsideTemperature (C)']
+        #groundTemps.append(d.attrs['AmbientTemperature (C)'])
+        #temps.append(d.attrs['CCDTemperature'])
+    
+    FPI_Results['Clouds'] = {'mean': Clouds[:,0], 'max': Clouds[:,1], 'min': Clouds[:,2]}
     FPI_Results['Dome']   = None # assume no X300
     FPI_Results['Inside'] = None # assume no X300
-    try:
-        # call modules from BoltWood for the two days required and combine the data
-        if bw_cloud_file_1 != '': # Look for boltwood data
-            if bw_cloud_file_2 == '': # only use one file
-                bw_date, bw_sky, bw_amb = BoltwoodSensor.ReadTempLog(
-                        bw_cloud_file_1,
-                        tz=site['Timezone']
-                        )
-
-            else: # use two files
-                bw_date1, bw_sky1, bw_amb1 = BoltwoodSensor.ReadTempLog(
-                        bw_cloud_file_1,
-                        tz=site['Timezone'])
-                bw_date2, bw_sky2, bw_amb2 = BoltwoodSensor.ReadTempLog(
-                        bw_cloud_file_2,
-                        tz=site['Timezone']
-                        )
-                bw_date = np.hstack((bw_date1,bw_date2))
-                bw_sky = np.hstack((bw_sky1, bw_sky2))
-                bw_amb = np.hstack((bw_amb1, bw_amb2))
-
-
-            # Create a data structure containing the sensor temperatures
-            Clouds = np.nan*np.zeros((np.size(FPI_Results['sky_times']),3))
-            count = 0
-            for (t, dt) in zip(FPI_Results['sky_times'], FPI_Results['sky_intT']):
-                # Start and stop time of image data
-                t0 = np.array(t                                   )
-                t1 = np.array(t + datetime.timedelta(seconds = dt))
-                # Find the corresponding times in the Boltwood data
-                i = ((bw_date >= t0) & (bw_date <= t1))
-                if i.any():
-                    Clouds[count,:] = [bw_sky[i].mean(), bw_sky[i].max(), bw_sky[i].min()]
-                else:
-                    Clouds[count,:] = [np.nan,np.nan,np.nan]
-
-
-                count = count+1
-
-            if(np.size(bw_date) == 0):
-                FPI_Results['Clouds'] = None
-            else:
-                FPI_Results['Clouds'] = {'mean': Clouds[:,0], 'max': Clouds[:,1], 'min': Clouds[:,2]}
-
-
-        # Write things to the log
-        if FPI_Results['Clouds'] is None: # if it wasn't found
-            logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + 'No Boltwood cloud sensor data found.\n')
-            c = np.nan*np.zeros(len(FPI_Results['LOSwind']))
-            FPI_Results['Clouds'] = {'mean': c, 'max': c, 'min': c}
-
-        else:
-            logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + 'Found and loaded Boltwood cloud sensor data.\n')
-
-    except: # There was an error in the Boltwood code. Write the log but continue.
-        c = np.nan*np.zeros(len(FPI_Results['LOSwind']))
-        FPI_Results['Clouds'] = {'mean': c, 'max': c, 'min': c}
-        tracebackstr = traceback.format_exc()
-        logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + 'Unknown error obtaining Boltwood data for %s. Traceback listed below. Analysis will continue without these data.\n-----------------------------------\n%s\n-----------------------------------\n' % (datestr,tracebackstr))
-        notify_the_humans = True
+    #try:
+    #    # call modules from BoltWood for the two days required and combine the data
+    #    if bw_cloud_file_1 != '': # Look for boltwood data
+    #        if bw_cloud_file_2 == '': # only use one file
+    #            bw_date, bw_sky, bw_amb = BoltwoodSensor.ReadTempLog(
+    #                    bw_cloud_file_1,
+    #                    tz=site['Timezone']
+    #                    )
+    #
+    #        else: # use two files
+    #            bw_date1, bw_sky1, bw_amb1 = BoltwoodSensor.ReadTempLog(
+    #                    bw_cloud_file_1,
+    #                    tz=site['Timezone'])
+    #            bw_date2, bw_sky2, bw_amb2 = BoltwoodSensor.ReadTempLog(
+    #                    bw_cloud_file_2,
+    #                    tz=site['Timezone']
+    #                    )
+    #            bw_date = np.hstack((bw_date1,bw_date2))
+    #            bw_sky = np.hstack((bw_sky1, bw_sky2))
+    #            bw_amb = np.hstack((bw_amb1, bw_amb2))
+    #
+    #
+    #        # Create a data structure containing the sensor temperatures
+    #        Clouds = np.nan*np.zeros((np.size(FPI_Results['sky_times']),3))
+    #        count = 0
+    #        for (t, dt) in zip(FPI_Results['sky_times'], FPI_Results['sky_intT']):
+    #            # Start and stop time of image data
+    #            t0 = np.array(t                                   )
+    #            t1 = np.array(t + datetime.timedelta(seconds = dt))
+    #            # Find the corresponding times in the Boltwood data
+    #            i = ((bw_date >= t0) & (bw_date <= t1))
+    #            if i.any():
+    #                Clouds[count,:] = [bw_sky[i].mean(), bw_sky[i].max(), bw_sky[i].min()]
+    #            else:
+    #                Clouds[count,:] = [np.nan,np.nan,np.nan]
+    #
+    #
+    #            count = count+1
+    #
+    #        if(np.size(bw_date) == 0):
+    #            FPI_Results['Clouds'] = None
+    #        else:
+    #            FPI_Results['Clouds'] = {'mean': Clouds[:,0], 'max': Clouds[:,1], 'min': Clouds[:,2]}
+    #
+    #
+    #    # Write things to the log
+    #    if FPI_Results['Clouds'] is None: # if it wasn't found
+    #        logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + 'No Boltwood cloud sensor data found.\n')
+    #        c = np.nan*np.zeros(len(FPI_Results['LOSwind']))
+    #        FPI_Results['Clouds'] = {'mean': c, 'max': c, 'min': c}
+    #
+    #    else:
+    #        logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + 'Found and loaded Boltwood cloud sensor data.\n')
+    #
+    #except: # There was an error in the Boltwood code. Write the log but continue.
+    #    c = np.nan*np.zeros(len(FPI_Results['LOSwind']))
+    #    FPI_Results['Clouds'] = {'mean': c, 'max': c, 'min': c}
+    #    tracebackstr = traceback.format_exc()
+    #    logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + 'Unknown error obtaining Boltwood data for %s. Traceback listed below. Analysis will continue without these data.\n-----------------------------------\n%s\n-----------------------------------\n' % (datestr,tracebackstr))
+    #    notify_the_humans = True
 
 
     # Helper function to determine if laser wavelength drift is occuring
@@ -1996,7 +2090,9 @@ def find_unprocessed_days( years = range(2005,2020) , doys = range(1,367) ):
     return unproc
 
 
-def load_level0(instr_name, year, doy, sky_line_tag='X', fpi_results_dir =  '/rdata/airglow/fpi/results/'):
+def load_level0(instr_name, year, doy, \
+                sky_line_tag='X', \
+                fpi_results_dir =  '/rdata/airglow/fpi/results/'):
     '''
     Return the contents of the npz file specified by the arguments.
     Access contents with, e.g.,
@@ -2010,8 +2106,10 @@ def load_level0(instr_name, year, doy, sky_line_tag='X', fpi_results_dir =  '/rd
     # Load FPI_Results
     process_dn = datetime.datetime(year,1,1) + datetime.timedelta(days = doy-1)
     site_name = fpiinfo.get_site_of(instr_name, process_dn)
-    # If instrument not at a site at this time, return IOError, file not found, for consistency
-    # with the error that occurs if the instrument didn't take data on that night
+    # If instrument not at a site at this time,
+    #        return IOError, file not found, for consistency
+    #        with the error that occurs if the instrument didn't
+    #        take data on that night
     if site_name is None:
         raise IOError('File Not Found for %s_%s_%03i' % (instr_name, year, doy))
     datestr = process_dn.strftime('%Y%m%d')
@@ -2031,18 +2129,66 @@ def load_level0(instr_name, year, doy, sky_line_tag='X', fpi_results_dir =  '/rd
     return npzdict
 
 
+nominal_dt = datetime.datetime.now()
 
+cwd = os.getcwd()
 
+isFound = False
+stat = ''
+m = re.match(r'.*/(.*)/\d*',cwd)
+if m:
+    stat = m.group(1)
+    isFound = True
 
+if (isFound):
+    isFound = False
+    if (stat == 'ann02'):
+        instr_name = 'minime28'
+        site_name = 'an2'
+        isFound = True
 
+    if (stat == 'ann03'):
+        instr_name = 'minime08'
+        site_name = 'ann'
+        isFound = True
 
+    if (stat == 'aak'):
+        instr_name = 'minime08'
+        site_name = 'aak'
+        isFound = True
 
+isFound = True
+instr_name = 'minime08'
+site_name = 'abi'
+        
+if (isFound):
+    print('From directory : ', stat, '; site_name = ', site_name)
 
+else:
+    print('Directory is : ->', cwd)
+    print('Can not file the station name in this.')
+    exit()
+        
+#site_name = fpiinfo.get_site_of(instr_name, nominal_dt)
 
+# Import the site information
+site = fpiinfo.get_site_info(site_name, nominal_dt)
+# Import the instrument information
+instrument = fpiinfo.get_instr_info(instr_name, nominal_dt)
 
+print(site)
 
+print(instrument)
 
-
-
-
-
+data_dir = './'
+results_dir = './'
+process_directory(data_dir, results_dir, \
+                      instrument, site, reference='laser', \
+                      wind_err_thresh=100., \
+                      temp_err_thresh=100., \
+                      make_plots = True, \
+                      Tmin = 300., Tmax=1500., \
+                      bw_cloud_file_1 = '', \
+                      bw_cloud_file_2 = '', \
+                      cloud_thresh = [-22.,-10.], \
+                      horizon_cutoff=-6)
