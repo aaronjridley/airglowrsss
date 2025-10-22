@@ -87,7 +87,10 @@ args = get_args_fpi()
 
 doDebug = True
 
-site, instrument = get_station_info_from_directory(doDebug)
+#site, instrument = get_station_info_from_directory(doDebug)
+
+site = 'ann02'
+instrument = 'test'
 
 #db = load_database(args.datadir, site)
 
@@ -129,15 +132,17 @@ for iFile, file in enumerate(laserFiles):
     times.append(d.info['LocalTime'])
     img = np.asarray(d)
     nx, ny = np.shape(img)
+
+    cleanImage = remove_hotspots(img)
     
-    mcx, mcy = find_center_ajr(img, cx, cy, delta)
+    mcx, mcy = find_center_ajr(cleanImage, cx, cy, delta)
 
     centerXs.append(mcx)
     centerYs.append(mcy)
     nXs.append(nx)
     nYs.append(ny)
     
-    img1d, r1d = integrate_radially(img, mcx, mcy, 0)
+    img1d, r1d = integrate_radially(cleanImage, mcx, mcy, 0)
     r1d2 = r1d * r1d
     iMax_, iMin_, fwhm = find_peak_and_valley(img1d)
     valInner = np.mean(img1d[iMin_ - 2 : iMin_ + 3])
@@ -148,7 +153,7 @@ for iFile, file in enumerate(laserFiles):
     slopes.append((valOuter - valInner) / (rOuter - rInner))
     intercepts.append(valOuter - slopes[-1] * rOuter)
 
-    peak2valley = np.percentile(img,98) - np.percentile(img,2)
+    peak2valley = np.percentile(cleanImage,98) - np.percentile(cleanImage,2)
     brightnessFromHist.append(peak2valley)
     brightnessFromFringe.append(img1d[iMax_] - img1d[iMin_])
 
@@ -161,9 +166,9 @@ for iFile, file in enumerate(laserFiles):
         ax1 = fig.add_axes([0.1,0.05,0.9,0.5])
         ax2 = fig.add_axes([0.1,0.6,0.85,0.35])
 
-        m = np.mean(img)
-        s = np.std(img)
-        cax1 = ax1.pcolor(img, cmap = 'bwr', vmin = m-3*s, vmax = m+3*s)
+        m = np.mean(cleanImage)
+        s = np.std(cleanImage)
+        cax1 = ax1.pcolor(cleanImage, cmap = 'magma', vmin = m-3*s, vmax = m+3*s)
         cbar1 = fig.colorbar(cax1, ax = ax1, shrink = 0.5, pad=0.01)
         ax1.set_aspect(1.0)
         ax1.axhline(mcy)
