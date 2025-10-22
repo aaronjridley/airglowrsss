@@ -199,6 +199,41 @@ def find_center_ajr(array, cCx, cCy, delta):
 # 
 # ----------------------------------------------------------------------
 
+def median_filter(image, n):
+    # n is full width
+    half = int((n-1)/2)
+    nX, nY = np.shape(image)
+    newImage = np.zeros((nX, nY))
+    for iX in range(nX):
+        print(iX, nX)
+        iB = iX - half
+        iE = iX + half + 1
+        if (iB < 0):
+            iB = 0
+            id = iX
+            iE = iX + id + 1
+        if (iE > nX + 1):
+            iE = nX + 1
+            id = nX - iX
+            iB = nX - 2*id
+        for jY in range(nY):
+            jB = jY - half
+            jE = jY + half + 1
+            if (jB < 0):
+                jB = 0
+                jd = jY
+                jE = jY + jd + 1
+            if (jE > nY + 1):
+                jE = nY + 1
+                jd = nY - jY
+                jB = nY - 2*jd
+            newImage[iX, jY] = np.median(image[iB:iE, jB:jE])
+    return newImage
+    
+# ----------------------------------------------------------------------
+# 
+# ----------------------------------------------------------------------
+
 args = get_args_fpi()
 
 filelist = args.filelist
@@ -212,7 +247,7 @@ nominal_dt = datetime.datetime.now()
 site_name = 'aak'
 instr_name = 'minime08'
 # Import the site information
-site_name = fpiinfo.get_site_of(instr_name, nominal_dt)
+#site_name = fpiinfo.get_site_of(instr_name, nominal_dt)
 site = fpiinfo.get_site_info(site_name, nominal_dt)
 # Import the instrument information
 instrument = fpiinfo.get_instr_info(instr_name, nominal_dt)
@@ -288,10 +323,12 @@ for iImage in range(nFiles):
     slope = (valOuter - valInner) / (rOuter - rInner)
     inter = valOuter - slope * rOuter
 
-    r2d = create_radial_array(img, mcx, mcy)
-    r2d2 = r2d * r2d
-    background = r2d2 * slope + inter
+    #r2d = create_radial_array(img, mcx, mcy)
+    #r2d2 = r2d * r2d
+    #background = r2d2 * slope + inter
 
+    background = median_filter(img, 75)
+    
     img = img - background
 
     normImage = background / exposure
@@ -303,9 +340,10 @@ for iImage in range(nFiles):
         os.system(command)
 
     imageData = allCompleteImages[iImage]
+    
     save_new_image(filelist[iImage], directory, imageData, img)
 
-    directory = 'backgrounds'
+    directory = 'backgrounds2'
     if (not os.path.exists(directory)):
         command = 'mkdir ' + directory
         print('Running command : ', command)
