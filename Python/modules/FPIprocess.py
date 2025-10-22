@@ -2158,9 +2158,12 @@ if (isFound):
         isFound = True
 
 isFound = True
-instr_name = 'minime08'
-site_name = 'abi'
-        
+instr_name = 'minime28'
+site_name = 'kev'
+
+#instr_name = 'minime08'
+#site_name = 'abi'
+
 if (isFound):
     print('From directory : ', stat, '; site_name = ', site_name)
 
