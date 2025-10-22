@@ -320,6 +320,29 @@ _sites['abi'] = {
                 }
     }
 
+_sites['kev'] = {
+        'Location':     (69.7579, 27.0204, 80),
+        'Name':         'Kevo, Finland',
+        'Abbreviation': 'kev',
+        'Timezone':     'UTC',
+        'BufferTime':   45,
+        'CloudThresh':  -25.0,
+        'scpUser':      'fpi',
+        'scpPort':      19996,
+        'Network':      'nation',
+        'sql_id':       19, # ID on the airglow SQL database
+        'share':        False, # whether or not to save a copy of the npz file in a separate folder
+        'borders':      True,
+        'Directions':   {
+                'Laser': {'ze': -180, 'az': 90, 'exptime': 30,
+		            'n_exp': 0, 'last_exp': None, 'delay':600},
+	            'Zenith': {'ze': 0, 'az': 90, 'exptime': 300, # BJH changed az from 0 to 90, 19 Aug 2014
+		            'n_exp': 0, 'last_exp': None, 'delay':1500},
+	            'MTM_Search': {'ze': -27.77, 'az': -21.47, 'exptime': 180,
+		            'n_exp': 0, 'last_exp': None, 'delay':0},
+                },
+    }
+
 _sites['an2'] = {
         'Location':     (42.27, -83.75, 300),
         'Name':         'Peach Mountain',
