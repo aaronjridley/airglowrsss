@@ -57,7 +57,7 @@ def get_args_fpi():
     parser.add_argument('-s', default = 5, type = int, \
                         help = 'search positions')
     
-    parser.add_argument('-n0', default = 45, type = int, \
+    parser.add_argument('-n0', default = -1, type = int, \
                         help = 'search positions')
     
     args = parser.parse_args()
@@ -468,9 +468,15 @@ for iFile, file in enumerate(filelist):
     # Add this so we can calculate Alpha in the functions called below:
     instrument['XBinning'] = d.info['XBinning']
 
-    if (args.n0):
+    if (args.n0 > 0):
         N_0 = args.n0
         rms = 0.0
+        N_0, rms = find_optimum_N0(laser_spectra, \
+                                   laser_sigma, \
+                                   instrument, \
+                                   annuli, \
+                                   initial_guess = args.n0, \
+                                   finalN = -1)
     else:
         if (len(nSave) > 0):
             if (nSave[-1] < 5):
@@ -478,7 +484,7 @@ for iFile, file in enumerate(filelist):
             else:
                 N0 = int(nSave[-1] * 0.75)
         else:
-            N0 = 50
+            N0 = 25
         N_0, rms = find_optimum_N0(laser_spectra, \
                                    laser_sigma, \
                                    instrument, \
