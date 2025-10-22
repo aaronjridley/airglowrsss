@@ -86,12 +86,13 @@ def fit_laser(instrument, annuli, laser_spectra, laser_sigma, N0 = 0, N1 = 500):
 
     return result
 
-def find_optimum_N0(laser_spectra, laser_sigma, instrument, annuli, initial_guess = 0, finalN = 500):
+def find_optimum_N0(laser_spectra, laser_sigma, instrument, annuli, \
+                    initial_guess = 0, finalN = 500):
 
     diffSave = 1e32
     N_0 = -1
     nStartTest = initial_guess
-    nMax = 25
+    nMax = 100
     keepGoing = True
     firstHit = False
 
@@ -100,13 +101,15 @@ def find_optimum_N0(laser_spectra, laser_sigma, instrument, annuli, initial_gues
     
     while (keepGoing):
         # Perform the fit to the best fringe pattern parameters:
-        result = fit_laser(instrument, annuli, laser_spectra, laser_sigma, N0 = nStartTest, N1 = finalN)
+        result = fit_laser(instrument, annuli, laser_spectra, laser_sigma, \
+                           N0 = nStartTest, N1 = finalN)
         laser_params = result.params
 
         # Create a fringe pattern based on the results:
         fringe = FPI.Laser_FringeModel(laser_params, annuli['r'])
 
-        diff = np.sqrt(np.mean((fringe[nStartTest:-1] - laser_spectra[nStartTest:-1])**2))
+        diff = np.sqrt(np.mean((fringe[nStartTest:-1] - \
+                                laser_spectra[nStartTest:-1])**2))
 
         if (diff < diffSave):
             N_0 = nStartTest
