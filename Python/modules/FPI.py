@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Filename: FPI.py
 
-import matplotlib
+import matplotlib.pyplot as plt
 #matplotlib.use('AGG')
 
 import subprocess
@@ -809,9 +809,12 @@ def ParameterFit(instrument,
     lasers = []
     for fn in lasers_all:
         d = ReadIMG(fn)
-        print('local time : ', d.info['LocalTime'])
         dt = local.localize(d.info['LocalTime'])
-        print('laser : ', fn, ' ; dt : ', dt, sunrise, sunset)
+        print('laser : ', fn)
+        print(' -> sunrise : ', sunrise)
+        print(' -> local time : ', d.info['LocalTime'])
+        print(' -> dt : ', dt)
+        print(' -> sunset : ', sunset)
         if dt > sunset and dt < sunrise:
             lasers.append(fn)
         else:
@@ -835,7 +838,7 @@ def ParameterFit(instrument,
             d = ReadIMG(fname)
             img = np.asarray(d)
             (cx,cy) = FindCenter(img, max_r = 250)
-            print(cx, cy)
+            print('  -> center x, y : ', cx, cy)
             appx_I = np.percentile(img,95) - np.percentile(img,5)
             if appx_I < LAS_I_THRESH:
                 logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + \
@@ -978,6 +981,18 @@ def ParameterFit(instrument,
         last_t = instrument['nominal_t']
         lam_laser = instrument['lam_laser']
 
+        # Reflectivity
+        R = instrument['default_params']['R']
+
+        # In Harding et al, these are I1 and I2:
+        a1 = instrument['default_params']['a1']
+        a2 = instrument['default_params']['a2']
+
+        # In Harding et al, these are image blur:
+        b0 = instrument['default_params']['b0']
+        b1 = instrument['default_params']['b1']
+        b2 = instrument['default_params']['b2']
+        
         # Loop through all of the lasers
         for fname in lasers:
 
@@ -1003,42 +1018,73 @@ def ParameterFit(instrument,
                 I = laser_spectra.max() - laser_spectra.min()
                 print('  --> Laser peak to valley intensity : ', I)
                 B = laser_spectra.min()
-
+                print(B)
                 laser_params = Parameters()
                 laser_params.add('n',     value = 1.0,       vary = False)
-                laser_params.add('t',     value = None,      vary = False) # We will search for this
+                laser_params.add('t',     value = None,      vary = False) 
                 laser_params.add('lam',   value = lam_laser, vary = False)
-                laser_params.add('R',     value = 0.5,        vary = False)
+                laser_params.add('R',     value = R,       vary = False)
                 laser_params.add('alpha', value = alpha,     vary = False)
                 laser_params.add('I',     value = I,         vary = False)
                 laser_params.add('B',     value = B,         vary = False)
-                laser_params.add('a1',    value = -0.1,      vary = False)
-                laser_params.add('a2',    value = 0.0,       vary = False)
-                laser_params.add('b0',    value = 0.5,       vary = False)
-                laser_params.add('b1',    value = 0.0,       vary = False)
-                laser_params.add('b2',    value = 0.0,       vary = False)
+                laser_params.add('a1',    value = a1,      vary = False)
+                laser_params.add('a2',    value = a2,       vary = False)
+                laser_params.add('b0',    value = b0,       vary = False)
+                laser_params.add('b1',    value = b1,       vary = False)
+                laser_params.add('b2',    value = b2,       vary = False)
 
-                # To find a good initial guess for "t", we'll need to do a grid search.  Search
-                # over 1 FSR around the last solved-for value (or the nominal value, if this is first trial).
-                # TODO: make this grid search a separate general function.
+                # To find a good initial guess for "t", we'll need to
+                # do a grid search.  Search over 1 FSR around the last
+                # solved-for value (or the nominal value, if this is
+                # first trial).  TODO: make this grid search a
+                # separate general function.
                 def goodness(t):
-                    # return the correlation between the fringe with this t and the data
+                    # return the correlation between the fringe with
+                    # this t and the data
                     laser_params['t'].value = t
                     fringe = Laser_FringeModel(laser_params, annuli['r'])
-                    return np.dot(fringe, laser_spectra)/(np.linalg.norm(fringe)*np.linalg.norm(laser_spectra))
-                t_candidates = np.linspace(last_t - lam_laser/4, last_t + lam_laser/4, 50)
-                corrvec = np.array([goodness(t) for t in t_candidates])
-                best_t = t_candidates[corrvec.argmax()]
-                laser_params['t'].value = best_t
+                    top = np.dot(fringe, laser_spectra)
+                    bot = np.linalg.norm(fringe) * np.linalg.norm(laser_spectra)
+                    return top/bot
 
+                nC = 51
+
+                nTries = 4
+                div = 2.0
+                best_t = last_t
+                #for iTry in range(nTries):
+                iTry = 0
+                while (div < 32.0):
+                    t_candidates = np.zeros(nC)
+                    dl = lam_laser / div / (nC-1)
+                    for i in range(nC):
+                        t_candidates[i] = best_t + (i - (nC-1)/2) * dl
+                    corrvec = np.array([goodness(t) for t in t_candidates])
+                    index = corrvec.argmax()
+                    best_t = t_candidates[index]
+
+                    if ((index < 5) or (index > nC*0.9)):
+                        div = div / 2
+                    else:
+                        div = div * 2
+                
+                laser_params['t'].value = best_t
+                #print(last_t, lam_laser)
+                #print('Best t : ', best_t)
+                
                 ####### Inversion of laser image ##########
 
-                # Now do least-squares fit, but in stages, varying only certain parameters at a time, according to:
+                # Now do least-squares fit, but in stages, varying only
+                # certain parameters at a time, according to:
                 order = [
                          ['alpha'],\
                          ['t','alpha'],\
                          ['B','I'],\
+                         ['a1','a2'],\
                          ['R'],\
+                         ['B','I'],\
+                         ['a1','a2'],\
+                         ['t','alpha'],\
                          ['t','alpha','B','I','R','a1','a2'], \
                          ]
                 if ESTIMATE_BLUR:
@@ -1047,24 +1093,46 @@ def ParameterFit(instrument,
                 data = laser_spectra[N0:N1]
                 sigma = laser_sigma[N0:N1]
 
-                for group in order: # set all the params in this group to "vary=True", and then run inversion
+                # set all the params in this group to "vary=True", and
+                # then run inversion
+                
+                for group in order: 
                     for param in list(laser_params.keys()):
                         if param in group:
                             laser_params[param].vary = True
                         else:
                             laser_params[param].vary = False
-                    # Set falloff terms to false, if this instrument only has a couple fringes
+                    # Set falloff terms to false, if this instrument
+                    # only has a couple fringes
                     if not instrument['many_fringes']:
                         for param in ['a2', 'b1', 'b2']:
                             laser_params[param].vary=False
                             laser_params[param].value=0.0
-
-                    laser_fit = Minimizer(Laser_Residual,laser_params, \
-                                        fcn_args=(annuli['r'][N0:N1],), fcn_kws={'data': data, 'sigma': sigma}, \
-                                        scale_covar = True)
+                    laser_fit = Minimizer(Laser_Residual, \
+                                          laser_params, \
+                                          fcn_args=(annuli['r'][N0:N1],), \
+                                          fcn_kws = {'data': data, \
+                                                     'sigma': sigma}, \
+                                          scale_covar = True)
                     result = laser_fit.leastsq()
-                    laser_params=result.params
+                    #print(' -> group : ', group)
+                    laser_params = result.params
 
+                print('  -> chi2 : ', result.redchi)
+                print('  -> params : ', result.params)
+                fig = plt.figure(figsize=(10, 6))
+                plt.rcParams.update({'font.size': 14})
+                ax = fig.add_axes([0.1,0.1,0.85,0.85])
+
+                fringe = Laser_FringeModel(laser_params, annuli['r'])
+                
+                ax.plot(annuli['r']**2, fringe)
+                ax.plot(annuli['r']**2, laser_spectra)
+                plotFile = fname + '.png'
+                print('  --> Outputting plotfile : ', plotFile)
+                fig.savefig(plotFile)
+                plt.close(fig)
+                
                 #if (laser_fit.redchi/laser_fit.params['I'].value < 1.): # TODO: try to find a better way to do this
                 if True: # TODO: just keep this? Let's just do quality control at a later stage.
                     # This is a valid image, store time
@@ -1250,7 +1318,8 @@ def ParameterFit(instrument,
         elif my_dt > dt[-2]: # extrapolate from second-to-last laser image
             my_dt = dt[-2]
 
-        # Calculate the cal_error at each laser image and linearly interpolate to my_dt
+        # Calculate the cal_error at each laser image and linearly
+        # interpolate to my_dt
         cal_error_vec = np.zeros(len(dt))
         for k in range(1,len(dt)-1):
             # Extract gap before, during, and after this image
@@ -1475,11 +1544,14 @@ def ParameterFit(instrument,
             sky_params.add('lam0', value = lam0,       vary = False) # This is determined by chemistry so it can't change.
 
             # Do a grid search to find a good starting value for lamc.
-            # The instrument bias might mean that lam0 is a really bad value to start with.
-            # Search over one FSR around the last solved-for value (or the nominal value, if it's the first run).
-            # It's not really important to sort by direction, since the instrument bias dominates.
+            # The instrument bias might mean that lam0 is a really bad
+            # value to start with.  Search over one FSR around the
+            # last solved-for value (or the nominal value, if it's the
+            # first run).  It's not really important to sort by
+            # direction, since the instrument bias dominates.
             def goodness(lamc):
-                # return the correlation between the fringe with this lamc and the data
+                # return the correlation between the fringe with this
+                # lamc and the data
                 sky_params['lamc'].value = lamc
                 fringe = Sky_FringeModel(sky_params, annuli['r'][N0:N1], lamvec, A_1D)
                 return np.dot(fringe, sky_spectra[N0:N1])/(np.linalg.norm(fringe)*np.linalg.norm(sky_spectra[N0:N1]))
@@ -1547,7 +1619,8 @@ def ParameterFit(instrument,
                 result = sky_fit.leastsq()
                 sky_params = result.params
 
-             # if the inversion failed, replace values with nans and set error bars to inf
+             # if the inversion failed, replace values with nans and
+             # set error bars to inf
             if not result.success or not result.errorbars or np.isnan(result.params['lamc'].stderr):
                 for p in result.params:
                     result.params[p].value = np.nan

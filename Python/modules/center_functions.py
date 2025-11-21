@@ -112,7 +112,7 @@ def find_center_ajr(array, cCx, cCy, delta):
                 iCy_ = cy
                 fwhm_ = fwhm
                 if (isVerbose):
-                    print('  -> Found better center : ', cx, cy, dx, dy, fwhm)
+                    print('  -> Found better center (x, y, peak-to-valley): ', cx, cy, dy)
 
     # Refine Further!
     iCxS_ = iCx_
@@ -132,14 +132,13 @@ def find_center_ajr(array, cCx, cCy, delta):
                 iCy_ = cy
                 fwhm_ = fwhm
                 if (isVerbose):
-                    print('  -> Found better center : ', \
-                          cx, cy, dx, dy, fwhm)
-
+                    print('  -> Found better center (x, y, peak-to-valley): ', \
+                          cx, cy, dy)
 
     integral, rdummy = integrate_radially(array, iCx_, iCy_, 0)
     iMax_, iMin_, fwhm = find_peak_and_valley(integral)
     dy = (integral[iMax_] - integral[iMin_])
                     
-    print(' -> Final center : ', iCx_, iCy_, dyMax, fwhm)
+    print(' -> Final center (x, y, p-to-v, FWHM): ', iCx_, iCy_, dyMax, fwhm)
 
     return iCx_, iCy_

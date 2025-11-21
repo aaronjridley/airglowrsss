@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Functions to process FPI data on remote2
 
@@ -293,6 +293,8 @@ if (isFound):
 isFound = True
 instr_name = 'minime08'
 site_name = 'abi'
+instr_name = 'minime28'
+site_name = 'kev'
 subtractBackground = False
 if (args.subtract):
     subtractBackground = True

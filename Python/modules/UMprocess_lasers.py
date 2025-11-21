@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import matplotlib
 matplotlib.use('AGG')
@@ -87,10 +87,9 @@ args = get_args_fpi()
 
 doDebug = True
 
-#site, instrument = get_station_info_from_directory(doDebug)
+site, instrument = get_station_info_from_directory(doDebug)
 
-site = 'ann02'
-instrument = 'test'
+print('site and instrument : ', site['Abbreviation'], instrument['Abbreviation'])
 
 #db = load_database(args.datadir, site)
 
@@ -136,6 +135,10 @@ for iFile, file in enumerate(laserFiles):
     cleanImage = remove_hotspots(img)
     
     mcx, mcy = find_center_ajr(cleanImage, cx, cy, delta)
+    (tcx,tcy) = FPI.FindCenter(img, max_r = 250)
+    print(' -> Center comparison, x/x/dx, y/y/dy: ', \
+          int(mcx), int(tcx), mcx-tcx, \
+          int(mcy), int(tcy), mcy-tcy)
 
     centerXs.append(mcx)
     centerYs.append(mcy)

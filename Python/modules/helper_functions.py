@@ -9,6 +9,28 @@ import datetime
 import fpiinfo
 import glob
 
+# ----------------------------------------------------------------------
+# This is for removing hotspots from the image, not used by default
+# ----------------------------------------------------------------------
+
+def remove_hotspots(image):
+
+    newImage = image
+
+    std = np.std(newImage)
+    med = np.median(newImage)
+    accMax = med + 10.0 * std
+    actMax = np.max(newImage)
+
+    if (accMax < actMax):
+        print(' -> Removing hot pixels: ')
+        print('   -> Acceptable max : ',accMax)
+        print('   -> Actual max     : ',np.max(newImage))
+        print('   -> replaced %d pixels' % len(newImage[newImage > accMax]))
+        newImage[newImage > accMax] = med
+
+    return newImage
+
 # -------------------------------------------------------------------
 # This gives the axes for multi-row, but single column plots.
 # Inputs:
@@ -74,10 +96,10 @@ def get_station_info_from_directory(doDebug = False):
 
     if (doDebug):
         print(cwd)
-        cwdArray = cwd.split('/')
-        ymd = cwdArray[-1]
-        site_name = cwdArray[-2]
-        date = datetime.datetime(int(ymd[0:4]), int(ymd[4:6]), int(ymd[6:8]))
+    cwdArray = cwd.split('/')
+    ymd = cwdArray[-1]
+    site_name = cwdArray[-2]
+    date = datetime.datetime(int(ymd[0:4]), int(ymd[4:6]), int(ymd[6:8]))
     
     # Import the site information
     site = fpiinfo.get_site_info(site_name, date)
@@ -87,6 +109,8 @@ def get_station_info_from_directory(doDebug = False):
         instr_name = 'minime08'
     if (site_name == 'aak'):
         instr_name = 'minime08'
+    if (site_name == 'kev'):
+        instr_name = 'minime28'
     
     # Import the instrument information
     instrument = fpiinfo.get_instr_info(instr_name, date)

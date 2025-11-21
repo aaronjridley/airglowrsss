@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Functions to process FPI data on remote2
 
@@ -1351,9 +1351,19 @@ def process_directory(data_direc, results_direc, \
     Diagnostic_Fig = plt.figure(dpi=300, figsize=(10,7.5)) 
     try:
         # Run the analysis
-        (FPI_Results, notify_the_humans) = FPI.ParameterFit(instrument, site, laser_fns, sky_fns, \
-                direc_tol=direc_tol, N=instrument['N'], N0=instrument['N0'], N1=instrument['N1'], \
-                            logfile=logfile, diagnostic_fig=Diagnostic_Fig, reference=reference, horizon_cutoff=horizon_cutoff)
+        (FPI_Results, notify_the_humans) = \
+            FPI.ParameterFit(instrument, \
+                             site, \
+                             laser_fns, \
+                             sky_fns, \
+                             direc_tol=direc_tol, \
+                             N=instrument['N'], \
+                             N0=instrument['N0'], \
+                             N1=instrument['N1'], \
+                             logfile=logfile, \
+                             diagnostic_fig=Diagnostic_Fig, \
+                             reference=reference, \
+                             horizon_cutoff=horizon_cutoff)
         logfile.write(datetime.datetime.now().strftime('%m/%d/%Y %H:%M:%S %p: ') + \
             'Laser and sky image analysis complete.\n')
     except:
@@ -2142,14 +2152,14 @@ if m:
 
 if (isFound):
     isFound = False
-    if (stat == 'ann02'):
+    if (stat == 'kev'):
         instr_name = 'minime28'
-        site_name = 'an2'
+        site_name = 'kev'
         isFound = True
 
-    if (stat == 'ann03'):
+    if (stat == 'abi'):
         instr_name = 'minime08'
-        site_name = 'ann'
+        site_name = 'abi'
         isFound = True
 
     if (stat == 'aak'):
@@ -2157,9 +2167,9 @@ if (isFound):
         site_name = 'aak'
         isFound = True
 
-isFound = True
-instr_name = 'minime28'
-site_name = 'kev'
+#isFound = True
+#instr_name = 'minime28'
+#site_name = 'kev'
 
 #instr_name = 'minime08'
 #site_name = 'abi'

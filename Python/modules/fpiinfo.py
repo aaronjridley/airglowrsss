@@ -1426,7 +1426,7 @@ _instruments['minime08'] = {
 _instruments['minime28'] = {
         'name'          : 'minime28',
         'N'             : 500,          # Number of annuli
-        'N0'            : 9,            # First annulus to use
+        'N0'            : 3,            # First annulus to use
         'N1'            : 500,          # Last annulus to use
         'focal_length'  : 300e-3,       # focal length of lens in m
         'pix_size'      : 13e-6,        # pixel size on CCD in m

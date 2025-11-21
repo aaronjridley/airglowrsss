@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -88,7 +88,6 @@ for npzname in files:
     FPI_Results['sigma_V'] = sigWind
     losTemp = FPI_Results['T']
     sigTemp = FPI_Results['sigma_T']
-
 
     ymd = losTimes[0].strftime('%Y%m%d')
     if (args.txt):
